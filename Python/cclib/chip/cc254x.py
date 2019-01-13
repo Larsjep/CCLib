@@ -49,7 +49,7 @@ def prettyData(label, data):
 	chunksize = 32
 	print(f"{label}:")
 	for i, chunk in enumerate(chunks(data, chunksize)):
-		print(f"0x{i*chunksize:4X}: " + ",".join([f"{ord(x):2X}" for x in chunk]))
+		print(f"0x{i*chunksize:04X}: " + ",".join([f"{x:02X}" for x in chunk]))
 	
 
 class CC254X(ChipDriver):
@@ -119,17 +119,7 @@ class CC254X(ChipDriver):
 		# Setup DPTR
 		a = self.instri( 0x90, offset )		# MOV DPTR,#data16
 
-		# Prepare ans array
-		ans = bytearray()
-
-		# Read bytes
-		for i in range(0, size):
-			a = self.instr ( 0xE0 )			# MOVX A,@DPTR
-			ans.append(a)
-			a = self.instr ( 0xA3 )			# INC DPTR
-
-		# Return ans
-		return ans
+		return bytearray(self.burstReadCode(size));
 
 	def writeXDATA( self, offset, bytes ):
 		"""
@@ -611,25 +601,16 @@ class CC254X(ChipDriver):
 			self.clearDMAIRQ(1)
 
 			# Check if we should verify
-			print("Ready for verify")
 			if verify:
 				verifyBytes = self.readCODE(fAddr, iLen)
-				print(f"Read {len(verifyBytes)} bytes for verify")
 
 				verifyOrg = data[iOfs:iOfs+iLen]
-				prettyData("Expected", verifyOrg)
 
 				for index, org in enumerate(verifyOrg):
-    					read = verifyBytes[index]
+					read = verifyBytes[index]
 					if org != read:
-    					prettyData("Expected", verifyOrg)
-						prettyData("Read", verifyBytes)
-						# print(f"Expected {[ord(x) for x in verifyOrg]}")
-						# print(f"read {[ord(x) for x in verifyBytes]}")
+						print(f"{org:02X} (expected) != {read:02X} (actual)")
 						raise IOError("Flash verification error on offset 0x%04x + 0x%04x" % (fAddr,index))
-
-				#if verifyBytes != data[iOfs:iOfs+iLen]:
-				#	raise IOError("Flash verification error on offset 0x%04x" % fAddr)
 			iOfs += iLen
 
 		if showProgress:

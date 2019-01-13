@@ -65,6 +65,7 @@ int LED      = 2;
 #define   CMD_CHPERASE  byte(0x0D)
 #define   CMD_RESUME    byte(0x0E)
 #define   CMD_HALT      byte(0x0F)
+#define   CMD_BURSTRD   byte(0x10)
 #define   CMD_PING      byte(0xF0)
 #define   CMD_INSTR_VER byte(0xF1)
 #define   CMD_INSTR_UPD byte(0xF2)
@@ -277,6 +278,36 @@ void loop() {
     if (handleError()) return;
     sendFrame( ANS_OK, bAns );
     
+  } else if (inByte == CMD_BURSTRD) {
+
+    // Calculate the size of the burst read
+    iLen = (c1 << 8) | c2;
+
+    // Validate length
+    if (iLen > bufferSize) {
+      sendFrame( ANS_ERROR, 3 );
+      return;
+    }
+
+    // Confirm transfer
+    sendFrame( ANS_READY );
+
+    // Do the reading into buffer
+    byte* bufPtr = buffer;
+    for (int i = 0; i != iLen; ++i)
+    {
+      *bufPtr = dbg->exec( 0xE0 );    // MOVX A,@DPTR
+      dbg->exec( 0xA3 );              // INC DPTR
+      ++bufPtr;
+    }
+
+    // Send buffer
+    Serial.write(buffer, iLen);
+
+    bAns = dbg->getConfig();
+    if (handleError()) return;
+    sendFrame( ANS_OK, bAns );
+
   } else if (inByte == CMD_RD_CFG) {
     bAns = dbg->getConfig();
     if (handleError()) return;

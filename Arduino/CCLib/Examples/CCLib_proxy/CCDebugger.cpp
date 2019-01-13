@@ -381,7 +381,7 @@ byte CCDebugger::read()
   // Send 8 clock pulses if we are HIGH
   for (cnt = 8; cnt; cnt--) {
     digitalWrite(pinDC, HIGH);
-    cc_delay(2);
+    cc_delay(5);
 
     // Shift and read
     data <<= 1;
