@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
+from functools import reduce
 
 def toHex(data):
 	"""
@@ -345,6 +346,10 @@ class CCHEXFile:
 					baseAddress = ((bytes[0] << 8) | bytes[1]) << 4
 				elif bType == 0x04:
 					baseAddress = ((bytes[0] << 8) | bytes[1]) << 16
+				elif bType == 0x05:
+					if len(bytes) != 4:
+						raise IOError(f"Line {i}: Invalid number of data bytes record 05")
+					baseAddress = reduce(lambda x,y: x | y, [b << (8*i) for i, b in enumerate(bytes)])
 
 				# Check for data
 				elif bType == 0x00:
