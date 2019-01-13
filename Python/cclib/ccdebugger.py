@@ -34,6 +34,7 @@ def openCCDebugger( port, driver=None, enterDebug=False ):
 	"""
 
 	# Create a proxy class (this raises IOError on errors)
+	print(f"Enter debug: {enterDebug}")
 	proxy = CCLibProxy( port, enterDebug=enterDebug )
 
 	# Check if no chip is connected

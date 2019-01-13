@@ -35,13 +35,13 @@
 ////////////////////////////////////////
 
 // Pinout configuration (Configured for Arduino Leonardo)
-int CC_RST   = 5;
-int CC_DC    = 4;
-int CC_DD_I  = 3;
-int CC_DD_O  = 2;
+int CC_RST   = 15;
+int CC_DC    = 17;
+int CC_DD_I  = 4;
+int CC_DD_O  = 16;
 
 // Change this if you are using an external led
-int LED      = LED_BUILTIN;
+int LED      = 2;
 
 ////////////////////////////////////////
 ////////////////////////////////////////
@@ -80,6 +80,8 @@ byte inByte, bAns, bIdle;
 byte c1, c2, c3;
 unsigned short s1;
 int iLen, iRead;
+static const int bufferSize = 2048;
+byte buffer[bufferSize];
 
 /**
  * Initialize debugger
@@ -91,8 +93,8 @@ void setup() {
   dbg->setLED( LED, LED );
   
   // Initialize serial port
-  //Serial.begin(115200);
-  Serial.begin(9600);
+  Serial.begin(921600);
+  //Serial.begin(9600);
   
   // Wait for chip to initialize
   delay(100);
@@ -209,21 +211,19 @@ void loop() {
     
     // Confirm transfer
     sendFrame( ANS_READY );
-    
-    // Prepare for brust-write
-    dbg->write( 0x80 | (c1 & 0x07) ); // High-order bits
-    dbg->write( c2 ); // Low-order bits
-    
+       
     // Start serial loop
     iRead = iLen;
-    bIdle = 0;
+    int idle = 0;
+    byte* writePos = buffer;
+    
     while (iRead > 0) {
 
       // When we have data, forward them to the debugger
       if (Serial.available() >= 1) {
-        inByte = Serial.read();
-        dbg->write(inByte);
-        bIdle = 0;
+        *writePos = Serial.read();
+        writePos++;        
+        idle = 0;
         iRead--;
       }
 
@@ -231,19 +231,19 @@ void loop() {
       else {
 
         // If we are idle for more than 1s, drop command
-        if (++bIdle > 200) {
+        if (++idle > 200000) {
           
-          // The PC was disconnected/stale for too long
-          // complete the command by sending 0's
-          while (iRead > 0) {
-            dbg->write(0);
-            iRead--;
-          }
+          // // The PC was disconnected/stale for too long
+          // // complete the command by sending 0's
+          // while (iRead > 0) {
+          //   dbg->write(0);
+          //   iRead--;
+          // }
 
-          // Read debug status to complete the command sequence
-          dbg->switchRead();
-          bAns = dbg->read();
-          dbg->switchWrite();
+          // // Read debug status to complete the command sequence
+          // dbg->switchRead();
+          // bAns = dbg->read();
+          // dbg->switchWrite();
 
           // Send error
           sendFrame( ANS_ERROR, 4 );
@@ -252,9 +252,20 @@ void loop() {
         }
 
         // Wait for some time 
-        delay(50);
+        //delay(50);
 
       }
+    }
+
+    // Prepare for brust-write
+    dbg->write( 0x80 | (c1 & 0x07) ); // High-order bits
+    dbg->write( c2 ); // Low-order bits
+
+    byte* bufPos = buffer;
+    for (int i = 0; i != iLen; ++i)
+    {
+      dbg->write(*bufPos);
+      bufPos++;
     }
     
     // Read debug status

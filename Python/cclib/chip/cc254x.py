@@ -40,6 +40,17 @@ def getChipName(chipID):
 	shortID = (chipID & 0xff00) >> 8
 	return chipIDs[shortID]
 
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
+
+def prettyData(label, data):
+	chunksize = 32
+	print(f"{label}:")
+	for i, chunk in enumerate(chunks(data, chunksize)):
+		print(f"0x{i*chunksize:4X}: " + ",".join([f"{ord(x):2X}" for x in chunk]))
+	
 
 class CC254X(ChipDriver):
 	"""
@@ -600,10 +611,25 @@ class CC254X(ChipDriver):
 			self.clearDMAIRQ(1)
 
 			# Check if we should verify
+			print("Ready for verify")
 			if verify:
 				verifyBytes = self.readCODE(fAddr, iLen)
-				if verifyBytes != data[iOfs:iOfs+iLen]:
-					raise IOError("Flash verification error on offset 0x%04x" % fAddr)
+				print(f"Read {len(verifyBytes)} bytes for verify")
+
+				verifyOrg = data[iOfs:iOfs+iLen]
+				prettyData("Expected", verifyOrg)
+
+				for index, org in enumerate(verifyOrg):
+    					read = verifyBytes[index]
+					if org != read:
+    					prettyData("Expected", verifyOrg)
+						prettyData("Read", verifyBytes)
+						# print(f"Expected {[ord(x) for x in verifyOrg]}")
+						# print(f"read {[ord(x) for x in verifyBytes]}")
+						raise IOError("Flash verification error on offset 0x%04x + 0x%04x" % (fAddr,index))
+
+				#if verifyBytes != data[iOfs:iOfs+iLen]:
+				#	raise IOError("Flash verification error on offset 0x%04x" % fAddr)
 			iOfs += iLen
 
 		if showProgress:

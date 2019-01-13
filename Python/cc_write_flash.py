@@ -19,6 +19,7 @@
 from __future__ import print_function
 from cclib import CCHEXFile, getOptions, openCCDebugger
 import sys
+import traceback
 
 # Get serial port either form environment or from arguments
 opts = getOptions("Generic CCDebugger Flash Writer Tool", hexIn=True,
@@ -73,6 +74,7 @@ erasePrompt = "OVERWRITE"
 if opts['erase']:
 	erasePrompt = "ERASE and REPROGRAM"
 print("This is going to %s the chip. Are you sure? <y/N>: " % erasePrompt, end=' ')
+sys.stdout.flush()
 ans = sys.stdin.readline()[0:-1]
 if (ans != "y") and (ans != "Y"):
 	print("Aborted")
@@ -101,7 +103,8 @@ for mb in hexFile.memBlocks:
 	try:
 		dbg.writeCODE( mb.addr + offset, mb.bytes, verify=True, showProgress=True )
 	except Exception as e:
-		print("ERROR: %s" % str(e))
+		print("ERROR: %s" % str(e))		
+		traceback.print_exc()
 		sys.exit(3)
 
 # Done

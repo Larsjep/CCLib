@@ -198,7 +198,7 @@ byte CCDebugger::error()
  */
 void cc_delay( unsigned char d )
 {
-  volatile unsigned char i = d;
+  volatile unsigned int i = d;
   while( i-- );
 }
 
@@ -409,7 +409,7 @@ void CCDebugger::setDDDirection( byte direction )
   ddIsOutput = direction;
 
   // Handle new direction
-  if (ddIsOutput) {
+  if (ddIsOutput == OUTPUT) {
     digitalWrite(pinDD_I, LOW); // Disable pull-up
     pinMode(pinDD_O, OUTPUT);   // Enable output
     digitalWrite(pinDD_O, LOW); // Switch to low

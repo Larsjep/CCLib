@@ -19,6 +19,7 @@
 from __future__ import print_function
 from cclib import hexdump, renderDebugStatus, renderDebugConfig, getOptions, openCCDebugger
 import sys
+import traceback
 
 # Get serial port either form environment or from arguments
 opts = getOptions("Generic CCDebugger Information Tool")
@@ -26,8 +27,10 @@ opts = getOptions("Generic CCDebugger Information Tool")
 # Open debugger
 try:
 	dbg = openCCDebugger(opts['port'], enterDebug=opts['enter'])
+	print("Here ??")
 except Exception as e:
 	print("ERROR: %s" % str(e))
+	traceback.print_exc()
 	sys.exit(1)
 
 # Get device information from the read-only section

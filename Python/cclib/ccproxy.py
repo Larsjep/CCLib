@@ -82,7 +82,7 @@ class CCLibProxy:
 			else:
 				# Open port
 				try:
-					self.ser = serial.Serial(port, baudrate=9600, timeout=3.0, write_timeout=3.0)
+					self.ser = serial.Serial(port, baudrate=921600, timeout=3.0, write_timeout=3.0)
 					self.port = port
 					time.sleep(3)
 				except:
@@ -96,15 +96,21 @@ class CCLibProxy:
 
 			# Check if we should enter debug mode
 			if enterDebug:
+				print("Entering debug mode")
 				self.enter()
 
 			# Get instruction table version
+			print("X")
 			self.instructionTableVersion = self.getInstructionTableVersion()
+			print(f"ins table version: {self.instructionTableVersion}")
 
 			# Get chip info & ID
 			self.chipID = self.getChipID()
+			print(f"Chip id:{self.chipID}")
 			self.debugStatus = self.getStatus()
+			print(f"debugStatus {self.debugStatus}")
 			self.debugConfig = self.readConfig()
+			print(f"self.debugConfig {self.debugConfig}")
 
 	def detectPort(self):
 		"""
@@ -179,7 +185,7 @@ class CCLibProxy:
 				elif bL == 0x03:
 					raise IOError("The chip is not responding. Check your connection and/or wiring!")
 				else:
-					raise IOError("CCDebugger responded with an error (0x%02x)" % bL)
+					raise IOError("CCDebugger responded with an error (0x%02x) (%d)" % (bL, (bL << 8) | bH))
 			else:
 				return -bL
 
@@ -201,7 +207,7 @@ class CCLibProxy:
 		"""
 
 		# Send the 4-byte command frame
-		self.ser.write( chr(cmd)+chr(c1)+chr(c2)+chr(c3) )
+		self.ser.write( bytes([cmd,c1,c2,c3]) )
 		self.ser.flush()
 
 		# Read frame
@@ -340,11 +346,15 @@ class CCLibProxy:
 			raise IOError("Unable to prepare for brust-write! (Unknown response 0x%02x)" % ans)
 
 		# Start sending data
+		print(f"Writing burst of {len(data)}")
+		sys.stdout.flush()
 		self.ser.write(data)
 		self.ser.flush()
-
+		#time.sleep(1.0)
 		# Handle response & update debug status
 		self.debugStatus = self.readFrame()
+		print(f"Burst done with status: {self.debugStatus}")
+		sys.stdout.flush()
 		return self.debugStatus
 
 	def chipErase(self):
@@ -397,7 +407,7 @@ class CCLibProxy:
 
 		# Start sending data
 		for b in table:
-			self.ser.write(chr(b & 0xFF))
+			self.ser.write(bytes([b & 0xFF]))
 		self.ser.flush()
 
 		# Get confirmation

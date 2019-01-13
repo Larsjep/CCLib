@@ -540,6 +540,8 @@ class CC2510(ChipDriver):
 			# Check if we should verify
 			if verify:
 				verifyBytes = self.readCODE(fAddr, iLen)
+				print(f"Verifying: {len(verifyBytes)}")
+				sys.stdout.flush()
 				for i in range(0, iLen):
 					if verifyBytes[i] != data[iOfs+i]:
 						if flashRetries < 3:
