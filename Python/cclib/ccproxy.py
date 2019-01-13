@@ -85,7 +85,6 @@ class CCLibProxy:
 				try:
 					self.ser = serial.Serial(port, baudrate=921600, timeout=3.0, write_timeout=3.0)
 					self.port = port
-					time.sleep(3)
 				except:
 					raise IOError("Could not open port %s" % port)
 
@@ -97,21 +96,15 @@ class CCLibProxy:
 
 			# Check if we should enter debug mode
 			if enterDebug:
-				print("Entering debug mode")
 				self.enter()
 
 			# Get instruction table version
-			print("X")
 			self.instructionTableVersion = self.getInstructionTableVersion()
-			print(f"ins table version: {self.instructionTableVersion}")
 
 			# Get chip info & ID
 			self.chipID = self.getChipID()
-			print(f"Chip id:{self.chipID}")
 			self.debugStatus = self.getStatus()
-			print(f"debugStatus {self.debugStatus}")
 			self.debugConfig = self.readConfig()
-			print(f"self.debugConfig {self.debugConfig}")
 
 	def detectPort(self):
 		"""
@@ -347,14 +340,12 @@ class CCLibProxy:
 			raise IOError("Unable to prepare for brust-write! (Unknown response 0x%02x)" % ans)
 
 		# Start sending data
-		print(f"Writing burst of {len(data)}")
 		sys.stdout.flush()
 		self.ser.write(data)
 		self.ser.flush()
 		#time.sleep(1.0)
 		# Handle response & update debug status
 		self.debugStatus = self.readFrame()
-		print(f"Burst done with status: {self.debugStatus}")
 		sys.stdout.flush()
 		return self.debugStatus
 
